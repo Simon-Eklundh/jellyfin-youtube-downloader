@@ -1,0 +1,10 @@
+services:
+  jellyfin-youtube-downloader:
+    image: simoneklundh/jellyfin-youtube-backuper
+    environment:
+      - JELLYFIN_URL=
+      - JELLYFIN_API_KEY=
+      - JELLYFIN_USER_ID=
+      - YOUTUBE_LIBRARY_ID=
+    volumes:
+      - /your/media/path:/downloads
