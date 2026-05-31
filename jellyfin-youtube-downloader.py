@@ -9,6 +9,7 @@ load_dotenv()
 JELLYFIN_URL = os.environ["JELLYFIN_URL"]
 JELLYFIN_API_KEY = os.environ["JELLYFIN_API_KEY"]
 JELLYFIN_USER_ID = os.environ["JELLYFIN_USER_ID"]
+YOUTUBE_LIBRARY_ID = os.environ["YOUTUBE_LIBRARY_ID"]
 
 def get_jellyfin_items():
     resp = requests.get(
@@ -16,9 +17,9 @@ def get_jellyfin_items():
         headers={"X-Emby-Token": JELLYFIN_API_KEY},
         # TODO: set ISPLAYED to false
         params={
-            "IsPlayed": False,
+            "IsPlayed": True,
             "MediaTypes": "Video",
-            "parentId": "e59b37148e0ff06f0d35b0c3c714e75c",
+            "parentId": YOUTUBE_LIBRARY_ID,
             "recursive": True,
             "filters": "IsFavorite",
             "fields": "Path",
@@ -30,7 +31,7 @@ def get_jellyfin_items():
 def download_video(youtube_id, series_name, season_name):
     url = f"https://www.youtube.com/watch?v={youtube_id}"
     opts = {
-        "outtmpl": f"./downloaded_videos/{series_name}/{season_name}/%(title)s.%(ext)s",
+        "outtmpl": f"/downloads/{series_name}/{season_name}/%(title)s.%(ext)s",
         "embedthumbnail": True,
         "embedmetadata": True,
         "writesubtitles": True,
@@ -85,4 +86,7 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except KeyboardInterrupt:
+        print("\nAborted.")
