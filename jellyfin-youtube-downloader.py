@@ -29,7 +29,7 @@ def get_jellyfin_items():
     return resp.json()["Items"]
 
 def ensure_channel_images(youtube_id, series_name, season_name):
-    channel_dir = Path(f"./downloaded_videos/{series_name}")
+    channel_dir = Path(f"/downloads/{series_name}")
     season_dir = channel_dir / season_name
     channel_dir.mkdir(parents=True, exist_ok=True)
     season_dir.mkdir(parents=True, exist_ok=True)
@@ -70,7 +70,7 @@ def ensure_channel_images(youtube_id, series_name, season_name):
 def download_video(youtube_id, series_name, season_name):
     url = f"https://www.youtube.com/watch?v={youtube_id}"
     opts = {
-        "outtmpl": f"./downloaded_videos/{series_name}/{season_name}/%(title)s.%(ext)s",
+        "outtmpl": f"/downloads/{series_name}/{season_name}/%(title)s.%(ext)s",
         "embedthumbnail": True,
         "embedmetadata": True,
         "writesubtitles": True,
