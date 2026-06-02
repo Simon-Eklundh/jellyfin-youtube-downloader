@@ -1,2 +1,2 @@
-0 23 * * * root cd /app && python jellyfin-youtube-downloader.py >> /proc/1/fd/1 2>&1
+0 23 * * * root cd /app && /usr/local/bin/python jellyfin-youtube-downloader.py >> /proc/1/fd/1 2>&1
 
