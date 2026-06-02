@@ -28,10 +28,49 @@ def get_jellyfin_items():
     resp.raise_for_status()
     return resp.json()["Items"]
 
+def ensure_channel_images(youtube_id, series_name, season_name):
+    channel_dir = Path(f"./downloaded_videos/{series_name}")
+    season_dir = channel_dir / season_name
+    channel_dir.mkdir(parents=True, exist_ok=True)
+    season_dir.mkdir(parents=True, exist_ok=True)
+
+    if (channel_dir / "cover.jpg").exists():
+        return
+
+    print(f"Downloading channel images for {series_name}")
+
+    with yt_dlp.YoutubeDL({"quiet": True}) as ydl:
+        info = ydl.extract_info(f"https://www.youtube.com/watch?v={youtube_id}", download=False)
+
+    channel_url = info.get("channel_url") or info.get("uploader_url")
+    if not channel_url:
+        return
+
+    with yt_dlp.YoutubeDL({"quiet": True, "extract_flat": True}) as ydl:
+        channel_info = ydl.extract_info(channel_url, download=False)
+
+    thumbnails = channel_info.get("thumbnails", [])
+    if not thumbnails:
+        return
+
+    by_id = {t["id"]: t["url"] for t in thumbnails if "id" in t and "url" in t}
+
+    cover_url = by_id.get("avatar_uncropped")
+    backdrop_url = by_id.get("banner_uncropped")
+
+    if cover_url:
+        img = requests.get(cover_url).content
+        (channel_dir / "cover.jpg").write_bytes(img)
+        (season_dir / "cover.jpg").write_bytes(img)
+    if backdrop_url:
+        img = requests.get(backdrop_url).content
+        (channel_dir / "backdrop.jpg").write_bytes(img)
+
+
 def download_video(youtube_id, series_name, season_name):
     url = f"https://www.youtube.com/watch?v={youtube_id}"
     opts = {
-        "outtmpl": f"/downloads/{series_name}/{season_name}/%(title)s.%(ext)s",
+        "outtmpl": f"./downloaded_videos/{series_name}/{season_name}/%(title)s.%(ext)s",
         "embedthumbnail": True,
         "embedmetadata": True,
         "writesubtitles": True,
@@ -73,11 +112,17 @@ def mark_unfavourited(item_id):
 def main():
     items = get_jellyfin_items()
     print(f"Found {len(items)} items to process.")
+    seen_channels = set()
     for item in items:
         print(f"Processing: {item['Name']}")
         youtube_id = Path(item["Path"]).stem
+        series_name = item["SeriesName"]
+        season_name = item["SeasonName"]
+        if series_name not in seen_channels:
+            ensure_channel_images(youtube_id, series_name, season_name)
+            seen_channels.add(series_name)
         print(f"Downloading {item['Name']} ({youtube_id})")
-        result = download_video(youtube_id, item["SeriesName"], item["SeasonName"])
+        result = download_video(youtube_id, series_name, season_name)
         if result == True:
             mark_unfavourited(item["Id"])
             print(f"Marked unfavourited: {item['Name']}")
