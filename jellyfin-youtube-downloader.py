@@ -71,7 +71,7 @@ def download_video(youtube_id, series_name, season_name):
     url = f"https://www.youtube.com/watch?v={youtube_id}"
     season_number = season_name.split()[-1][-2:]
     opts = {
-        "outtmpl": f"/downloads/{series_name}/{season_number}/%(title)s - S{season_number}E%(upload_date>%j)s.%(ext)s",
+        "outtmpl": f"/downloads/{series_name}/Season {season_number}/%(title)s - S{season_number}E%(upload_date>%j)s.%(ext)s",
         "embedthumbnail": True,
         "embedmetadata": True,
         "writesubtitles": True,
