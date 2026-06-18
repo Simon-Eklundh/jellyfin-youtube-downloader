@@ -119,6 +119,8 @@ def main():
     items = get_jellyfin_items()
     print(f"Found {len(items)} items to process.")
     seen_channels = set()
+    processedItems = 0
+    failedItems = 0
     for item in items:
         print(f"Processing: {item['Name']}")
         youtube_id = Path(item["Path"]).stem
@@ -129,12 +131,14 @@ def main():
             seen_channels.add(series_name)
         print(f"Downloading {item['Name']} ({youtube_id})")
         result = download_video(youtube_id, series_name, season_name)
+        processedItems += 1
         if result == True:
             mark_unfavourited(item["Id"])
             print(f"Marked unfavourited: {item['Name']}")
         else:
             print(f"Download failed, skipping unfavourite: {item['Name']}")
-
+            failedItems += 1
+    print(f"Finished processing {processedItems} items with {failedItems} failures.")
 
 if __name__ == "__main__":
     try:
