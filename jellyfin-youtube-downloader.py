@@ -72,13 +72,18 @@ def download_video(youtube_id, series_name, season_name):
     season_number = season_name.split()[-1][-2:]
     opts = {
         "outtmpl": f"/downloads/{series_name}/Season {season_number}/%(title)s - S{season_number}E%(upload_date>%j)s.%(ext)s",
-        "embedthumbnail": True,
-        "embedmetadata": True,
-        "writesubtitles": True,
         "merge_output_format": "mkv",
-        "sponsorblock_remove": ["sponsor", "selfpromo", "interaction"],
+        "writesubtitles": True,
         "subtitleslangs": ["en"],
-        "embedsubs": True,
+        "writethumbnail": True,
+        "postprocessors": [
+            {"key": "FFmpegSubtitlesConvertor", "format": "srt"},
+            {"key": "SponsorBlock", "categories": ["sponsor", "selfpromo", "interaction", "outro", "selfpromo", "preview", "interaction", "chapter"], "when": "after_filter"},
+            {"key": "ModifyChapters", "remove_sponsor_segments": ["sponsor", "selfpromo", "interaction", "outro", "selfpromo", "preview", "interaction"]},
+            {"key": "FFmpegEmbedSubtitle"},
+            {"key": "FFmpegMetadata", "add_metadata": True, "add_chapters": True},
+            {"key": "EmbedThumbnail"},
+        ],
     }
     TRANSIENT_ERRORS = ["429", "too many requests", "rate limit", "503", "502", "sign in to confirm"]
     PERMANENT_ERRORS = ["video unavailable", "has been removed", "private video", "does not exist", "copyright"]
