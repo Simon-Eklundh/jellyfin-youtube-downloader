@@ -91,17 +91,17 @@ def download_video(youtube_id, series_name, season_name):
     try:
         with yt_dlp.YoutubeDL(opts) as ydl:
             ydl.download([url])
-        return True
+        return [True]
     except yt_dlp.utils.DownloadError as e:
         msg = str(e).lower()
         if any(x in msg for x in TRANSIENT_ERRORS):
             print(f"Transient error, try again later: {e}")
-            return False
+            return [False, msg]
         if any(x in msg for x in PERMANENT_ERRORS):
             print(f"Video permanently unavailable, skipping: {e}")
-            return True
+            return [True, msg]
         print(f"Unknown yt-dlp error: {e}")
-        return False
+        return [False, msg]
 
 
 def mark_unfavourited(item_id):
@@ -121,6 +121,7 @@ def main():
     seen_channels = set()
     processedItems = 0
     failedItems = 0
+    failure_reasons = []
     for item in items:
         print(f"Processing: {item['Name']}")
         youtube_id = Path(item["Path"]).stem
@@ -132,12 +133,17 @@ def main():
         print(f"Downloading {item['Name']} ({youtube_id})")
         result = download_video(youtube_id, series_name, season_name)
         processedItems += 1
-        if result == True:
+        if result[0] == True:
             mark_unfavourited(item["Id"])
             print(f"Marked unfavourited: {item['Name']}")
         else:
             print(f"Download failed, skipping unfavourite: {item['Name']}")
             failedItems += 1
+            failure_reasons.append(result[1])
+    if failure_reasons:
+        print("Failure reasons:")
+        for reason in failure_reasons:
+            print(f"  - {reason}")
     print(f"Finished processing {processedItems} items with {failedItems} failures.")
 
 if __name__ == "__main__":
