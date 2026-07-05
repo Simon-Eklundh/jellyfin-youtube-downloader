@@ -10,6 +10,7 @@ JELLYFIN_URL = os.environ["JELLYFIN_URL"]
 JELLYFIN_API_KEY = os.environ["JELLYFIN_API_KEY"]
 JELLYFIN_USER_ID = os.environ["JELLYFIN_USER_ID"]
 YOUTUBE_LIBRARY_ID = os.environ["YOUTUBE_LIBRARY_ID"]
+COOKIES_FILE = os.environ.get("COOKIES_FILE", "cookies.txt")
 
 def get_jellyfin_items():
     resp = requests.get(
@@ -76,6 +77,7 @@ def download_video(youtube_id, series_name, season_name):
         "writesubtitles": True,
         "subtitleslangs": ["en"],
         "writethumbnail": True,
+        "cookiefile": COOKIES_FILE,
         "postprocessors": [
             {"key": "FFmpegSubtitlesConvertor", "format": "srt"},
             {"key": "SponsorBlock", "categories": ["sponsor", "selfpromo", "interaction", "outro", "selfpromo", "preview", "interaction", "chapter"], "when": "after_filter"},
