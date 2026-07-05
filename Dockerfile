@@ -1,4 +1,8 @@
-FROM python:3.13-slim
+FROM docker.io/denoland/deno:bin AS deno
+
+FROM docker.io/python:3.13-slim
+
+COPY --from=deno /deno /usr/local/bin/deno
 
 RUN apt-get update && apt-get install -y --no-install-recommends ffmpeg cron && rm -rf /var/lib/apt/lists/*
 

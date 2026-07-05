@@ -15,6 +15,8 @@ This is a simple backup solution for people who (like me) use tubearchivist to d
 
 It calls jellyfin asking for watched and favourited videos in a set library. It then downloads the video from youtube (with sponsorblock), and unfavourites it in jellyfin so it can be deleted
 
+Optionally, for age restricted content, you can add a cookie file.
+
 ## docker compose
 
 ```docker-compose
@@ -26,6 +28,8 @@ services:
       - JELLYFIN_API_KEY=
       - JELLYFIN_USER_ID=
       - YOUTUBE_LIBRARY_ID=
+      - COOKIES_FILE=somePathHere.txt
     volumes:
       - /your/media/path:/downloads
+      - /your/path/to/cookieFile/cookiesFile.txt:/somepathhere/somepathHere.txt
 ```
