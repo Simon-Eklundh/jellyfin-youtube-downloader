@@ -176,8 +176,7 @@ def main():
             ensure_channel_images(youtube_id, series_name, season_name)
             seen_channels.add(series_name)
         print(f"Downloading {item['Name']} ({youtube_id})")
-        #result = download_video(youtube_id, series_name, season_name)
-        result = [False, "Download failed"]
+        result = download_video(youtube_id, series_name, season_name)
         processedItems += 1
         if result[0] == True:
             mark_unfavourited(item["Id"])
