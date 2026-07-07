@@ -74,9 +74,9 @@ def ensure_channel_images(youtube_id, series_name, season_name):
 
 def download_video(youtube_id, series_name, season_name):
     url = f"https://www.youtube.com/watch?v={youtube_id}"
-    season_number = season_name.split()[-1][-2:]
+    
     opts = {
-        "outtmpl": f"/downloads/{series_name}/Season {season_number}/%(title)s - S{season_number}E%(upload_date>%j)s.%(ext)s",
+        "outtmpl": f"/downloads/{series_name}/Season {season_name}/%(title)s - S{season_name}E%(upload_date>%j)s.%(ext)s",
         "merge_output_format": "mkv",
         "writesubtitles": True,
         "subtitleslangs": ["en"],
@@ -171,11 +171,13 @@ def main():
         youtube_id = Path(item["Path"]).stem
         series_name = item["SeriesName"]
         season_name = item["SeasonName"]
+        season_name = season_name.split()[-1][-2:]
         if series_name not in seen_channels:
             ensure_channel_images(youtube_id, series_name, season_name)
             seen_channels.add(series_name)
         print(f"Downloading {item['Name']} ({youtube_id})")
-        result = download_video(youtube_id, series_name, season_name)
+        #result = download_video(youtube_id, series_name, season_name)
+        result = [False, "Download failed"]
         processedItems += 1
         if result[0] == True:
             mark_unfavourited(item["Id"])
