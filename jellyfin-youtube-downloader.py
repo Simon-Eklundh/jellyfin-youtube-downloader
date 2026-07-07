@@ -12,6 +12,7 @@ JELLYFIN_USER_ID = os.environ["JELLYFIN_USER_ID"]
 YOUTUBE_LIBRARY_ID = os.environ["YOUTUBE_LIBRARY_ID"]
 COOKIES_FILE = os.environ.get("COOKIES_FILE", "cookies.txt")
 
+
 def get_jellyfin_items():
     resp = requests.get(
         f"{JELLYFIN_URL}/Users/{JELLYFIN_USER_ID}/Items",
@@ -29,6 +30,7 @@ def get_jellyfin_items():
     resp.raise_for_status()
     return resp.json()["Items"]
 
+
 def ensure_channel_images(youtube_id, series_name, season_name):
     channel_dir = Path(f"/downloads/{series_name}")
     season_dir = channel_dir / season_name
@@ -41,7 +43,9 @@ def ensure_channel_images(youtube_id, series_name, season_name):
     print(f"Downloading channel images for {series_name}")
 
     with yt_dlp.YoutubeDL({"quiet": True}) as ydl:
-        info = ydl.extract_info(f"https://www.youtube.com/watch?v={youtube_id}", download=False)
+        info = ydl.extract_info(
+            f"https://www.youtube.com/watch?v={youtube_id}", download=False
+        )
 
     channel_url = info.get("channel_url") or info.get("uploader_url")
     if not channel_url:
@@ -77,18 +81,58 @@ def download_video(youtube_id, series_name, season_name):
         "writesubtitles": True,
         "subtitleslangs": ["en"],
         "writethumbnail": True,
+        "thumbnailformat": "jpg",
         "cookiefile": COOKIES_FILE,
         "postprocessors": [
             {"key": "FFmpegSubtitlesConvertor", "format": "srt"},
-            {"key": "SponsorBlock", "categories": ["sponsor", "selfpromo", "interaction", "outro", "selfpromo", "preview", "interaction", "chapter"], "when": "after_filter"},
-            {"key": "ModifyChapters", "remove_sponsor_segments": ["sponsor", "selfpromo", "interaction", "outro", "selfpromo", "preview", "interaction"]},
+            {
+                "key": "SponsorBlock",
+                "categories": [
+                    "sponsor",
+                    "selfpromo",
+                    "interaction",
+                    "outro",
+                    "preview",
+                    "chapter",
+                ],
+                "when": "after_filter",
+            },
+            {
+                "key": "ModifyChapters",
+                "remove_sponsor_segments": [
+                    "sponsor",
+                    "selfpromo",
+                    "interaction",
+                    "outro",
+                    "preview",
+                ],
+            },
             {"key": "FFmpegEmbedSubtitle"},
             {"key": "FFmpegMetadata", "add_metadata": True, "add_chapters": True},
+            {
+                # convert the thumbnail to jpg BEFORE embedding
+                "key": "FFmpegThumbnailsConvertor",
+                "format": "jpg",
+                "when": "before_dl",
+            },
             {"key": "EmbedThumbnail"},
         ],
     }
-    TRANSIENT_ERRORS = ["429", "too many requests", "rate limit", "503", "502", "sign in to confirm"]
-    PERMANENT_ERRORS = ["video unavailable", "has been removed", "private video", "does not exist", "copyright"]
+    TRANSIENT_ERRORS = [
+        "429",
+        "too many requests",
+        "rate limit",
+        "503",
+        "502",
+        "sign in to confirm",
+    ]
+    PERMANENT_ERRORS = [
+        "video unavailable",
+        "has been removed",
+        "private video",
+        "does not exist",
+        "copyright",
+    ]
 
     try:
         with yt_dlp.YoutubeDL(opts) as ydl:
@@ -147,6 +191,7 @@ def main():
         for reason in failure_reasons:
             print(f"  - {reason}")
     print(f"Finished processing {processedItems} items with {failedItems} failures.")
+
 
 if __name__ == "__main__":
     try:
