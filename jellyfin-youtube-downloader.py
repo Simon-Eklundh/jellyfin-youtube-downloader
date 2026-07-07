@@ -81,7 +81,6 @@ def download_video(youtube_id, series_name, season_name):
         "writesubtitles": True,
         "subtitleslangs": ["en"],
         "writethumbnail": True,
-        "thumbnailformat": "jpg",
         "cookiefile": COOKIES_FILE,
         "postprocessors": [
             {"key": "FFmpegSubtitlesConvertor", "format": "srt"},
@@ -110,12 +109,11 @@ def download_video(youtube_id, series_name, season_name):
             {"key": "FFmpegEmbedSubtitle"},
             {"key": "FFmpegMetadata", "add_metadata": True, "add_chapters": True},
             {
-                # convert the thumbnail to jpg BEFORE embedding
+                # convert the thumbnail to jpg so jellyfin picks it up as a sidecar
                 "key": "FFmpegThumbnailsConvertor",
                 "format": "jpg",
                 "when": "before_dl",
             },
-            {"key": "EmbedThumbnail"},
         ],
     }
     TRANSIENT_ERRORS = [
@@ -198,3 +196,4 @@ if __name__ == "__main__":
         main()
     except KeyboardInterrupt:
         print("\nAborted.")
+
