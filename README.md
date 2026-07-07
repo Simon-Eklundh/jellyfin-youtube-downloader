@@ -23,6 +23,9 @@ Optionally, for age restricted content, you can add a cookie file.
 services:
   jellyfin-youtube-downloader:
     image: simoneklundh/jellyfin-youtube-backuper
+    # run as a non-root user; the media path and cookie file must be
+    # writable by this UID:GID (65534 is "nobody")
+    user: "65534:65534"
     environment:
       - JELLYFIN_URL=
       - JELLYFIN_API_KEY=

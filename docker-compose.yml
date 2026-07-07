@@ -1,6 +1,8 @@
 services:
   jellyfin-youtube-downloader:
     image: simoneklundh/jellyfin-youtube-backuper
+    # nobody; swap for your own UID:GID if that's what owns the media
+    user: "65534:65534"
     environment:
       - JELLYFIN_URL=
       - JELLYFIN_API_KEY=
