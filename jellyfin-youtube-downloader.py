@@ -42,7 +42,7 @@ def ensure_channel_images(youtube_id, series_name, season_name):
 
     print(f"Downloading channel images for {series_name}")
 
-    with yt_dlp.YoutubeDL({"quiet": True}) as ydl:
+    with yt_dlp.YoutubeDL({"quiet": True, "cookiefile": COOKIES_FILE}) as ydl:
         info = ydl.extract_info(
             f"https://www.youtube.com/watch?v={youtube_id}", download=False
         )
@@ -51,7 +51,9 @@ def ensure_channel_images(youtube_id, series_name, season_name):
     if not channel_url:
         return
 
-    with yt_dlp.YoutubeDL({"quiet": True, "extract_flat": True}) as ydl:
+    with yt_dlp.YoutubeDL(
+        {"quiet": True, "extract_flat": True, "cookiefile": COOKIES_FILE}
+    ) as ydl:
         channel_info = ydl.extract_info(channel_url, download=False)
 
     thumbnails = channel_info.get("thumbnails", [])
