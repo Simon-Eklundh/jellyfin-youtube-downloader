@@ -13,16 +13,19 @@ jobs:
   
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
-      - name: Manual auth test
-        run: |
-          curl -s -o /dev/null -w "HTTP status: %{http_code}\n" \
-            -u "${{ secrets.DOCKERHUB_USERNAME }}:${{ secrets.DOCKERHUB_TOKEN }}" \
-            https://registry-1.docker.io/v2/
       - name: Log in to Docker Hub
-        uses: docker/login-action@v3
-        with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
+        run: |
+          mkdir -p ~/.docker
+          AUTH=$(printf '%s:%s' "${{ secrets.DOCKERHUB_USERNAME }}" "${{ secrets.DOCKERHUB_TOKEN }}" | base64 -w0)
+          cat > ~/.docker/config.json <<EOF
+          {
+            "auths": {
+              "https://index.docker.io/v1/": {
+                "auth": "$AUTH"
+              }
+            }
+          }
+          EOF
 
       - name: Build and push
         uses: docker/build-push-action@v6
