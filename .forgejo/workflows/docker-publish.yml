@@ -15,9 +15,10 @@ jobs:
         uses: docker/setup-buildx-action@v3
       - name: Debug secret length
         run: |
-          echo -n "secrets:"
-          echo -n "${{ secrets.DOCKERHUB_TOKEN }}"
-          echo -n "${{ secrets.DOCKERHUB_USERNAME }}"
+          echo "DOCKERHUB_TOKEN length:"
+          echo -n "${{ secrets.DOCKERHUB_TOKEN }}" | wc -c
+          echo "DOCKERHUB_USERNAME length:"
+          echo -n "${{ secrets.DOCKERHUB_USERNAME }}" | wc -c
       - name: Log in to Docker Hub
         uses: docker/login-action@v3
         with:
