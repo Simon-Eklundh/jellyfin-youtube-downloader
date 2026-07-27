@@ -17,6 +17,8 @@ It calls jellyfin asking for watched and favourited videos in a set library. It 
 
 Optionally, for age restricted content, you can add a cookie file.
 
+Optionally, you can also get notified of run results via [Apprise](https://github.com/caronc/apprise-api).
+
 ## docker compose
 
 ```docker-compose
@@ -32,6 +34,8 @@ services:
       - JELLYFIN_USER_ID=
       - YOUTUBE_LIBRARY_ID=
       - COOKIES_FILE=somePathHere.txt
+      - APPRISE_URL=http://your-apprise-api-host:8000
+      - VERBOSE_FAIL_NOTIFICATIONS=false
     volumes:
       - /your/media/path:/downloads
       - /your/path/to/cookieFile/cookiesFile.txt:/somepathhere/somepathHere.txt

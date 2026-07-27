@@ -1,4 +1,5 @@
 import os
+import sys
 import requests
 import yt_dlp
 from pathlib import Path
@@ -11,6 +12,8 @@ JELLYFIN_API_KEY = os.environ["JELLYFIN_API_KEY"]
 JELLYFIN_USER_ID = os.environ["JELLYFIN_USER_ID"]
 YOUTUBE_LIBRARY_ID = os.environ["YOUTUBE_LIBRARY_ID"]
 COOKIES_FILE = os.environ.get("COOKIES_FILE", "cookies.txt")
+APPRISE_URL = os.environ.get("APPRISE_URL", "").rstrip("/")
+VERBOSE_FAIL_NOTIFICATIONS = os.environ.get("VERBOSE_FAIL_NOTIFICATIONS", "false").lower() == "true"
 
 
 def get_jellyfin_items():
@@ -42,7 +45,9 @@ def ensure_channel_images(youtube_id, series_name, season_name):
 
     print(f"Downloading channel images for {series_name}")
 
-    with yt_dlp.YoutubeDL({"quiet": True, "cookiefile": COOKIES_FILE}) as ydl:
+    with yt_dlp.YoutubeDL(
+        {"quiet": True, "cookiefile": COOKIES_FILE, "color": "no_color"}
+    ) as ydl:
         info = ydl.extract_info(
             f"https://www.youtube.com/watch?v={youtube_id}", download=False
         )
@@ -52,7 +57,12 @@ def ensure_channel_images(youtube_id, series_name, season_name):
         return
 
     with yt_dlp.YoutubeDL(
-        {"quiet": True, "extract_flat": True, "cookiefile": COOKIES_FILE}
+        {
+            "quiet": True,
+            "extract_flat": True,
+            "cookiefile": COOKIES_FILE,
+            "color": "no_color",
+        }
     ) as ydl:
         channel_info = ydl.extract_info(channel_url, download=False)
 
@@ -84,6 +94,7 @@ def download_video(youtube_id, series_name, season_name):
         "subtitleslangs": ["en"],
         "writethumbnail": True,
         "cookiefile": COOKIES_FILE,
+        "color": "no_color",
         "postprocessors": [
             {"key": "FFmpegSubtitlesConvertor", "format": "srt"},
             {
@@ -150,6 +161,16 @@ def download_video(youtube_id, series_name, season_name):
         return [False, msg]
 
 
+def notify_apprise(title, body):
+    if not APPRISE_URL:
+        return
+    try:
+        resp = requests.post(f"{APPRISE_URL}", json={"title": title, "body": body})
+        resp.raise_for_status()
+    except requests.RequestException as e:
+        print(f"Failed to send Apprise notification: {e}")
+
+
 def mark_unfavourited(item_id):
     # TODO: change this to work properly
     resp = requests.post(
@@ -175,7 +196,13 @@ def main():
         season_name = item["SeasonName"]
         season_name = season_name.split()[-1][-2:]
         if series_name not in seen_channels:
-            ensure_channel_images(youtube_id, series_name, season_name)
+            try:
+                ensure_channel_images(youtube_id, series_name, season_name)
+            except yt_dlp.utils.DownloadError as e:
+                msg = f"Fatal error fetching channel images for {series_name}: {e}"
+                print(msg)
+                notify_apprise("YouTube Downloader - Fatal Error", msg)
+                sys.exit(1)
             seen_channels.add(series_name)
         print(f"Downloading {item['Name']} ({youtube_id})")
         result = download_video(youtube_id, series_name, season_name)
@@ -186,12 +213,18 @@ def main():
         else:
             print(f"Download failed, skipping unfavourite: {item['Name']}")
             failedItems += 1
-            failure_reasons.append(result[1])
+            failure_reasons.append((item["Name"], result[1]))
     if failure_reasons:
         print("Failure reasons:")
-        for reason in failure_reasons:
-            print(f"  - {reason}")
-    print(f"Finished processing {processedItems} items with {failedItems} failures.")
+        for name, reason in failure_reasons:
+            print(f"  - {name}: {reason}")
+    summary = f"Finished processing {processedItems} items with {failedItems} failures."
+    print(summary)
+    if APPRISE_URL:
+        notify_apprise("YouTube Downloader", summary)
+        if VERBOSE_FAIL_NOTIFICATIONS and failure_reasons:
+            failure_body = "\n".join(f"- {name}: {reason}" for name, reason in failure_reasons)
+            notify_apprise("YouTube Downloader - Failures", failure_body)
 
 
 if __name__ == "__main__":
