@@ -19,6 +19,8 @@ Optionally, for age restricted content, you can add a cookie file.
 
 Optionally, you can also get notified of run results via [Apprise](https://github.com/caronc/apprise-api).
 
+By default the YouTube video ID is taken to be the whole filename (e.g. tubearchivist's default naming). If your filenames embed the ID differently (e.g. `title [VIDEO_ID].mp4`), set `YOUTUBE_ID_REGEX` to a regex with a capture group around the ID, such as `\[([^\]]+)\]`. Run `python jellyfin-youtube-downloader.py --dry-run` to check the regex against one real item (prints the path, filename stem, and what ID would be extracted) without downloading or notifying anything.
+
 ## docker compose
 
 ```docker-compose
@@ -36,6 +38,7 @@ services:
       - COOKIES_FILE=somePathHere.txt
       - APPRISE_URL=http://your-apprise-api-host:8000
       - VERBOSE_FAIL_NOTIFICATIONS=false
+      - YOUTUBE_ID_REGEX=
     volumes:
       - /your/media/path:/downloads
       - /your/path/to/cookieFile/cookiesFile.txt:/somepathhere/somepathHere.txt

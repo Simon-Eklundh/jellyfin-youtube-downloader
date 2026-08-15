@@ -1,4 +1,5 @@
 import os
+import re
 import sys
 import requests
 import yt_dlp
@@ -14,6 +15,19 @@ YOUTUBE_LIBRARY_ID = os.environ["YOUTUBE_LIBRARY_ID"]
 COOKIES_FILE = os.environ.get("COOKIES_FILE", "cookies.txt")
 APPRISE_URL = os.environ.get("APPRISE_URL", "").rstrip("/")
 VERBOSE_FAIL_NOTIFICATIONS = os.environ.get("VERBOSE_FAIL_NOTIFICATIONS", "false").lower() == "true"
+YOUTUBE_ID_REGEX = os.environ.get("YOUTUBE_ID_REGEX", "")
+
+
+def extract_youtube_id(path):
+    stem = Path(path).stem
+    if not YOUTUBE_ID_REGEX:
+        return stem
+    match = re.search(YOUTUBE_ID_REGEX, stem)
+    if not match:
+        raise ValueError(
+            f"YOUTUBE_ID_REGEX {YOUTUBE_ID_REGEX!r} did not match filename stem: {stem!r}"
+        )
+    return match.group(1) if match.groups() else match.group(0)
 
 
 def get_jellyfin_items():
@@ -191,7 +205,13 @@ def main():
     failure_reasons = []
     for item in items:
         print(f"Processing: {item['Name']}")
-        youtube_id = Path(item["Path"]).stem
+        try:
+            youtube_id = extract_youtube_id(item["Path"])
+        except ValueError as e:
+            msg = f"Fatal error extracting YouTube ID: {e}"
+            print(msg)
+            notify_apprise("YouTube Downloader - Fatal Error", msg)
+            sys.exit(1)
         series_name = item["SeriesName"]
         season_name = item["SeasonName"]
         season_name = season_name.split()[-1][-2:]
@@ -227,9 +247,31 @@ def main():
             notify_apprise("YouTube Downloader - Failures", failure_body)
 
 
+def dry_run():
+    items = get_jellyfin_items()
+    if not items:
+        print("No items found to test against.")
+        return
+    item = items[0]
+    stem = Path(item["Path"]).stem
+    print(f"Path: {item['Path']}")
+    print(f"Stem: {stem}")
+    if YOUTUBE_ID_REGEX:
+        print(f"Regex: {YOUTUBE_ID_REGEX}")
+    try:
+        youtube_id = extract_youtube_id(item["Path"])
+    except ValueError as e:
+        print(f"FAILED: {e}")
+        return
+    print(f"Extracted YouTube ID: {youtube_id}")
+
+
 if __name__ == "__main__":
     try:
-        main()
+        if "--dry-run" in sys.argv:
+            dry_run()
+        else:
+            main()
     except KeyboardInterrupt:
         print("\nAborted.")
 
