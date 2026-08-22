@@ -33,7 +33,7 @@ def extract_youtube_id(path):
 def get_jellyfin_items():
     resp = requests.get(
         f"{JELLYFIN_URL}/Users/{JELLYFIN_USER_ID}/Items",
-        headers={"X-Emby-Token": JELLYFIN_API_KEY},
+        headers={"Authorization": f'MediaBrowser Token="{JELLYFIN_API_KEY}"'},
         # TODO: set ISPLAYED to false
         params={
             "IsPlayed": True,
@@ -189,7 +189,7 @@ def mark_unfavourited(item_id):
     # TODO: change this to work properly
     resp = requests.post(
         f"{JELLYFIN_URL}/UserItems/{item_id}/UserData",
-        headers={"X-Emby-Token": JELLYFIN_API_KEY},
+        headers={"Authorization": f'MediaBrowser Token="{JELLYFIN_API_KEY}"'},
         json={"IsFavorite": False},
         params={"userId": JELLYFIN_USER_ID},
     )
